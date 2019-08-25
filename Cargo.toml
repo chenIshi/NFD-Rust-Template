@@ -1,5 +1,5 @@
 [package]
-name = "NFD"
+name = "NFD_RUST_Template"
 version = "0.1.0"
 authors = ["chenishi <chen.ishi@gmail.com>"]
 edition = "2018"
