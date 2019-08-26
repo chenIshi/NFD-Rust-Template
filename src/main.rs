@@ -12,7 +12,7 @@ use pnet::packet::udp::UdpPacket;
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::env;
-use NFD_RUST_Template::packet_info;
+use NFD_RUST_Template::backend::packet_info;
 
 fn main() {
     /* Setup the default basic environment */
