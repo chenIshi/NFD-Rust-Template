@@ -9,9 +9,10 @@ use pnet::packet::ethernet::{EthernetPacket, MutableEthernetPacket, EtherTypes};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::tcp::TcpPacket;
 use pnet::packet::udp::UdpPacket;
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap, HashSet, BTreeSet};
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::env;
+use NFD_RUST_Template::backend::obj::{PacketField, Variable, PacketInfo, PacketMap};
 use NFD_RUST_Template::backend::packet_info;
 
 fn main() {
@@ -40,6 +41,8 @@ fn main() {
         Err(e) => panic!("An error occurred when creating the datalink channel: {}", e),
     };
 
+    /* START RECEIVING PACKETS ... */
+
     loop {
         match rx.next() {
             Ok(packet) => {
@@ -47,14 +50,15 @@ fn main() {
 
                 /* init packet info lookup table */
 
-                let mut addr_table = HashMap::new();
-                let mut port_table = HashMap::new();
-                let mut flag_table = HashMap::new();
-                let init_success = packet_info::extract_packet_info(& ethpacket, &mut addr_table, &mut port_table, &mut flag_table);
+                let mut packet_table = PacketMap::new();
+                let init_success = packet_info::extract_packet_info(& ethpacket, &mut packet_table);
                 if !init_success {
                     println!("Not a supported packet type, Skip!");
                     continue;
                 }
+
+                /* sym_table is for recording the mapping relationship between ID and value */
+                let sym_table = packet_info::init_table(packet_table);
             },
             Err(e) => {
                 /* If an error occurs, we can handle it here */
