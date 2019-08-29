@@ -1,11 +1,17 @@
+extern crate ipnet;
+
 use std::collections::{HashMap, BTreeMap};
-use std::collections::{HashSet, BTreeSet};
+use std::collections::{BTreeSet};
 use std::mem::discriminant;
 use std::net::{Ipv4Addr, Ipv6Addr};
+use ipnet::{Ipv4Net};
 
 pub type PacketMap = BTreeMap<PacketField, PacketInfo>;
 
-pub type RuleMap = BTreeMap<String, (PacketField, Ipv4Addr, Ipv4Addr)>;
+pub type RuleMap = BTreeMap<String, (PacketField, Ipv4Net)>;
+
+/* express the relationship between [ID] and [Type] with hashmap */
+pub type SymbolTable = HashMap<String, Variable>;
 
 /* Specify field like source IP, source port to look for */
 #[derive(PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
@@ -18,6 +24,8 @@ pub enum PacketField {
     Sport,
     /* Destination port*/
     Dport,
+    FlagTcp,
+    FlagUdp,
     /* Syn in tcp flag */
     FlagSyn,
     /* Ack in tcp flag */
@@ -30,8 +38,8 @@ pub enum PacketField {
 /* C union like enum structure  */
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum PacketInfo {
-    IP(Ipv4Addr),
-    Port(u32),
+    IP(Option<Ipv4Addr>),
+    Port(Option<u32>),
     Flag(bool),
 }
 
@@ -40,13 +48,12 @@ pub enum PacketInfo {
 /* use Option to be able to express NULL when init without val binding */
 #[derive(Hash, Eq, Ord, PartialOrd)]
 pub enum Variable {
-    /* IP: [addr] + [mask] */
     /* init with IP(None, None) */
-    IP(Option<Ipv4Addr>, Option<Ipv4Addr>),
+    IP(Option<Ipv4Net>),
     /* init with Int(None) */
     Int(Option<i32>),
     /* init with Rule(None) */
-    Rule(Option<RuleMap>),
+    Rule(Option<(PacketField, Ipv4Net)>),
     Map(BTreeMap<Box<Variable>, Box<Variable>>),
     Set(BTreeSet<Box<Variable>>),
     Packet(PacketMap),

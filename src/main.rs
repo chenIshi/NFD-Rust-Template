@@ -1,4 +1,5 @@
 extern crate pnet;
+extern crate ipnet;
 extern crate NFD_RUST_Template;
 
 use pnet::datalink::{self, NetworkInterface};
@@ -9,11 +10,15 @@ use pnet::packet::ethernet::{EthernetPacket, MutableEthernetPacket, EtherTypes};
 use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::tcp::TcpPacket;
 use pnet::packet::udp::UdpPacket;
-use std::collections::{HashMap, BTreeMap, HashSet, BTreeSet};
+use ipnet::Ipv4Net;
+use std::collections::{HashMap, BTreeMap, BTreeSet};
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::str::FromStr;
 use std::env;
+
 use NFD_RUST_Template::backend::obj::{PacketField, Variable, PacketInfo, PacketMap};
 use NFD_RUST_Template::backend::packet_info;
+use NFD_RUST_Template::backend::symbol_table;
 
 fn main() {
     /* Setup the default basic environment */
@@ -58,7 +63,11 @@ fn main() {
                 }
 
                 /* sym_table is for recording the mapping relationship between ID and value */
-                let sym_table = packet_info::init_table(packet_table);
+                let mut sym_table = packet_info::init_table(packet_table);
+
+                let rule_allow = Some((PacketField::Sip, Ipv4Net::from_str("192.168.22.0/24").unwrap()));
+                symbol_table::insert_symbol(&mut sym_table, "allow".to_owned(), Variable::Rule(rule_allow));
+                symbol_table::create_set("seen".to_owned(), Variable::IP(None), &mut sym_table);
             },
             Err(e) => {
                 /* If an error occurs, we can handle it here */
